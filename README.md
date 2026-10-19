@@ -1,6 +1,6 @@
 # GoNa — Georreferenciamento
 
-Código da versão 16, publicada em 16/10/2026.
+Código da versão 17, publicada em 19/10/2026.
 
 ## Executar
 Requer Python 3 apenas para servir os arquivos localmente:
