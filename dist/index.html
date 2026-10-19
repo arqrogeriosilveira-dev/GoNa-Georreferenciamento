@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GoNa">
+  <meta name="description" content="GoNa: mapeamento e georreferenciamento com o GPS do celular.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <title>GoNa — Georreferenciamento</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.css">
+  <link rel="stylesheet" href="files.css">
+  <style>
+    :root{color-scheme:dark;--bg:#07111f;--surface:rgba(9,25,40,.62);--surface-2:rgba(16,39,56,.58);--line:rgba(145,190,210,.24);--text:#edf5fa;--muted:#9ab0bd;--green:#58df91;--cyan:#4bd8d0;--yellow:#ffd45e;--red:#ff6d6d;--gray:#87939d;--safe-bottom:env(safe-area-inset-bottom,0px)}
+    *{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{overflow:hidden}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}.app{height:100dvh;min-height:480px;display:flex;flex-direction:column;background:var(--bg)}
+    .topbar{z-index:800;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:rgba(7,17,31,.82);border-bottom:1px solid rgba(86,146,175,.18);backdrop-filter:blur(14px)}.menu-btn,.plain-btn{width:42px;height:42px;flex:none;display:grid;place-items:center;border:1px solid var(--line);border-radius:14px;background:rgba(17,39,57,.58)}.menu-glyph{font-size:20px;line-height:1;color:#cbe2eb}.brand-lockup{display:flex;align-items:center;gap:8px;min-width:0;flex:1}.brand-icon{width:36px;height:36px;flex:none;border-radius:10px;object-fit:cover}.brand{min-width:0;flex:1}.brand small{display:block;color:#94adbc;font-size:10px;letter-spacing:.12em;text-transform:uppercase}.brand strong{display:block;margin-top:2px;font-size:16px;font-weight:600}.brand-lockup .brand strong{margin:0;color:#fff;font-size:15px;line-height:1.15}.brand-lockup .brand small{margin-top:3px;font-size:9px;letter-spacing:.04em;text-transform:none}.net-state{display:flex;align-items:center;gap:6px;color:#a9c1cb;font-size:11px;white-space:nowrap}.net-dot{width:7px;height:7px;border-radius:50%;background:var(--yellow);box-shadow:0 0 9px rgba(255,212,94,.6)}
+    .map-wrap{position:relative;flex:1;min-height:0;background:#10242b}#map{position:absolute;inset:0;background:#10242b}.leaflet-container{font-family:inherit;background:#13272d}.leaflet-control-rotate{z-index:500!important}.leaflet-control-rotate a{background:rgba(9,25,40,.78)!important;border:1px solid rgba(145,190,210,.24)!important;border-radius:14px!important;backdrop-filter:blur(14px);box-shadow:0 5px 15px rgba(0,0,0,.2)!important;color:#e6f1f6!important;width:43px!important;height:43px!important;line-height:41px!important}.leaflet-control-rotate a svg{width:25px!important;height:25px!important}.leaflet-control-zoom a{color:#eaf4f7!important;background:#0b1b2b!important;border-color:rgba(116,170,194,.3)!important}.leaflet-control-attribution{background:rgba(6,17,28,.74)!important;color:#b7c9d1!important;font-size:9px!important}.leaflet-control-attribution a{color:#8ee8d2!important}
+    .gps-card{position:absolute;z-index:500;top:18px;left:50%;width:min(76%,320px);transform:translateX(-50%);padding:5px 0;background:transparent;border:0;box-shadow:none}.precision-label{margin:0 0 4px;color:#a9b6bf;font-size:9px;line-height:1;text-align:center;letter-spacing:.02em}.precision-scale{position:relative;display:flex;align-items:center;gap:3px;width:100%;height:10px;border-radius:99px}.precision-scale span{height:7px;border-radius:99px;opacity:.78}.precision-scale span:nth-child(1){flex:1;background:var(--green)}.precision-scale span:nth-child(2){flex:2;background:var(--yellow)}.precision-scale span:nth-child(3){flex:2;background:var(--red)}.precision-scale span:nth-child(4){flex:2;background:var(--gray)}.precision-indicator{position:absolute;top:50%;left:var(--accuracy-position,96%);width:15px;height:15px;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:50%;background:#091928;box-shadow:0 0 0 2px rgba(7,17,31,.48),0 1px 8px rgba(0,0,0,.7);transition:left .35s ease,opacity .2s ease}.gps-card.none .precision-indicator{opacity:.55}.gps-start{background:rgba(7,17,31,.76);backdrop-filter:blur(16px)}
+    .gps-start{position:absolute;z-index:450;top:50%;left:50%;width:min(88%,340px);transform:translate(-50%,-50%);padding:18px;border:1px solid var(--line);border-radius:18px;background:rgba(7,17,31,.96);text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.35)}.gps-start[hidden]{display:none}.gps-start h2{margin:0 0 7px;font-size:16px}.gps-start p{margin:0 0 15px;color:#a9bdc7;font-size:12px;line-height:1.45}.primary{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 16px;border:0;border-radius:12px;background:var(--green);color:#062116;font-size:12px;font-weight:600;box-shadow:0 0 18px rgba(77,224,142,.16)}.gps-error{position:absolute;z-index:460;left:12px;right:12px;top:116px;max-width:470px;margin:auto;padding:10px 12px;border:1px solid rgba(255,109,109,.4);border-radius:12px;background:rgba(49,20,25,.78);backdrop-filter:blur(14px);color:#ffd9d9;font-size:11px;line-height:1.4}.gps-error[hidden]{display:none}
+    .map-actions{position:absolute;z-index:450;right:12px;top:142px;display:grid;gap:8px}.map-actions button{width:43px;height:43px;border:1px solid var(--line);border-radius:14px;background:var(--surface);backdrop-filter:blur(14px);color:#e6f1f6;font-size:17px;box-shadow:0 5px 15px rgba(0,0,0,.2)}.map-actions button:active{background:rgba(23,55,74,.72)}
+    .sheet{position:absolute;z-index:600;left:0;right:0;bottom:0;width:100%;padding:10px 12px calc(10px + var(--safe-bottom));border-top:1px solid rgba(92,152,178,.25);background:rgba(7,17,31,.76);backdrop-filter:blur(18px);box-shadow:0 -8px 28px rgba(0,0,0,.16)}.mode-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.mode{min-width:0;min-height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(145,190,210,.2);border-radius:14px;background:rgba(18,40,57,.5);backdrop-filter:blur(12px);color:#b7c9d2;font-size:11px;font-weight:500}.mode-icon{font-size:18px;line-height:1;color:#9ab5c1}.mode.active{border-color:rgba(75,216,208,.48);background:rgba(26,114,119,.32);color:#aaf2ec;box-shadow:inset 0 0 16px rgba(75,216,208,.05),0 0 14px rgba(75,216,208,.06)}.mode.active .mode-icon{color:var(--green)}.action-row{display:flex;align-items:center;gap:9px;margin-top:8px}.count{min-width:0;flex:1;color:#c1d0d7;font-size:11px}.count strong{color:#f4fafc;font-weight:500}.record-btn{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 15px;border:0;border-radius:12px;background:var(--green);color:#062116;font-size:12px;font-weight:600}.record-btn.recording{background:#d75353;color:#fff}.secondary-btn{min-height:44px;padding:0 13px;border:1px solid var(--line);border-radius:12px;background:rgba(18,40,57,.48);backdrop-filter:blur(12px);color:#e0ebf0;font-size:11px}.record-hint{min-height:13px;margin-top:6px;color:#b3c5cd;font-size:10px;text-align:center}
+    .drawer-shade{position:absolute;z-index:900;inset:0;background:rgba(0,5,10,.62);opacity:0;pointer-events:none;transition:opacity .18s}.drawer{position:absolute;z-index:901;top:0;bottom:0;left:0;width:min(82%,310px);padding:calc(28px + env(safe-area-inset-top,0px)) 15px calc(18px + var(--safe-bottom));border-right:1px solid var(--line);background:rgba(10,26,41,.9);backdrop-filter:blur(18px);transform:translateX(-102%);transition:transform .2s ease;box-shadow:12px 0 30px rgba(0,0,0,.24)}.menu-open .drawer-shade{opacity:1;pointer-events:auto}.menu-open .drawer{transform:translateX(0)}.drawer-title{padding:0 8px 18px;margin-bottom:10px;border-bottom:1px solid rgba(137,174,190,.16)}.drawer-brand-logo{display:block;width:min(100%,230px);height:auto;margin:0 auto}.drawer-title small{display:block;margin-top:6px;color:#91a7b5;font-size:10px}.drawer button{width:100%;min-height:46px;display:flex;align-items:center;gap:12px;padding:0 11px;margin:3px 0;border:0;border-radius:12px;background:transparent;text-align:left;color:#c5d5de;font-size:12px}.drawer button.active{background:rgba(34,186,107,.15);color:#a6f1bf}.drawer button span{width:19px;text-align:center;color:#8daab8;font-size:16px}.drawer-note{margin:20px 7px;color:#8399a6;font-size:10px;line-height:1.5}
+    .toast{position:absolute;z-index:700;bottom:calc(133px + var(--safe-bottom));left:50%;max-width:calc(100% - 36px);transform:translateX(-50%);padding:10px 13px;border:1px solid var(--line);border-radius:12px;background:rgba(11,30,45,.76);backdrop-filter:blur(14px);color:#e6f0f4;font-size:11px;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.18);white-space:nowrap}.toast[hidden]{display:none}
+    @media(min-width:760px){.topbar{padding-left:22px;padding-right:22px}.gps-card{left:20px;right:auto;width:320px;transform:none}.map-actions{right:20px;top:20px}.sheet{left:50%;right:auto;bottom:14px;width:min(100% - 28px,620px);transform:translateX(-50%);border:1px solid rgba(92,152,178,.25);border-radius:18px}.map-wrap{min-height:500px}.toast{bottom:170px}}
+    @media(max-height:650px){.gps-card{padding:9px 11px}.coord{display:none}.sheet{padding-top:7px}.record-hint{display:none}.map-actions{top:130px}}
+    .area-tools{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:14px;background:rgba(18,40,57,.38)}.area-tools[hidden],.area-result[hidden]{display:none}.area-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}.area-choice{min-height:48px;border:1px solid var(--line);border-radius:10px;background:rgba(9,25,40,.38);color:#c5d7df;font-size:12px}.area-choice.active{border-color:var(--cyan);background:rgba(26,114,119,.25);color:#baf9ed}.area-choice small{display:block;margin-top:3px;color:#a9bdc7;font-size:10px}.area-stats{margin-top:8px;font-size:11px;color:#d6e6ed;line-height:1.5}.area-controls{display:flex;gap:7px;margin-top:8px}.area-controls button{flex:1;min-height:40px}.area-result{position:absolute;z-index:750;top:52px;left:12px;right:12px;max-width:360px;margin:auto;padding:16px;border:1px solid rgba(88,223,145,.4);border-radius:16px;background:rgba(7,26,36,.82);backdrop-filter:blur(18px);box-shadow:0 12px 30px #0004}.result-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#b9f7d1}.result-head button{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:transparent}.result-metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.result-metrics small{display:block;color:#a4bdc9;font-size:11px}.result-metrics strong{display:block;margin-top:5px;font-size:19px}.result-note{margin:10px 0 0;font-size:10px;color:#aac0ca;line-height:1.5}.sheet{max-height:65%;overflow-y:auto}.gps-start{background:rgba(7,17,31,.76)}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <button id="menuOpen" class="menu-btn" type="button" aria-label="Abrir menu"><span class="menu-glyph">☰</span></button>
+      <div class="brand-lockup"><img class="brand-icon" src="/icons/icon-192.png" alt=""><div class="brand"><strong>GoNa</strong><small>Georreferenciamento</small></div></div>
+      <div class="net-state"><span class="net-dot" id="netDot"></span><span id="netLabel">Mapa online</span></div>
+    </header>
+    <div class="document-bar" aria-label="Arquivo de mapa atual"><button id="activeDocumentButton" class="active-document" type="button" aria-label="Escolher arquivo"><span>Arquivo atual</span><strong id="activeDocumentName"></strong><span aria-hidden="true">⌄</span></button><button id="newDocument" class="new-document" type="button">+ Novo arquivo</button></div>
+    <main class="map-wrap">
+      <div id="map" aria-label="Mapa com localização atual"></div>
+      <section id="gpsCard" class="gps-card none" aria-live="polite">
+        <div class="precision-label">Precisão do GPS</div>
+        <div id="precisionScale" class="precision-scale" role="img" aria-label="Sem posição confiável"><span></span><span></span><span></span><span></span><i id="precisionIndicator" class="precision-indicator"></i></div>
+      </section>
+      <section id="gpsStart" class="gps-start">
+        <h2>Ative sua localização</h2>
+        <p>O mapa vai acompanhar sua posição atual enquanto estiver aberto. O navegador pedirá permissão para usar o GPS do celular.</p>
+        <button id="startGps" class="primary" type="button">◎ &nbsp; Usar minha localização</button>
+      </section>
+      <div id="gpsError" class="gps-error" role="alert" hidden></div>
+      <div class="feature-actions" role="group" aria-label="Criar ou excluir elementos do mapa">
+        <button id="newFeature" type="button" aria-label="Adicionar ponto, linha ou área" title="Novo elemento"><span>+</span><small>Novo</small></button>
+        <button id="deleteFeature" type="button" aria-label="Ativar exclusão de elementos" aria-pressed="false" title="Excluir elemento"><span>−</span><small>Excluir</small></button>
+      </div>
+      <button id="basemapToggle" class="basemap-toggle" type="button" aria-label="Fundo: Satélite. Toque para Híbrido" title="Alternar fundo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z M9 3v16 M15 5v16"/></svg><small id="basemapLabel">Satélite</small></button>
+      <div id="undoDelete" class="undo-delete" role="status" hidden><span>Elemento excluído</span><button id="undoDeleteBtn" type="button">Desfazer</button></div>
+      <div class="map-actions">
+        <button id="recenter" type="button" aria-label="Centralizar na minha posição" title="Centralizar na minha posição">◎</button>
+        <button id="zoomIn" type="button" aria-label="Aproximar" title="Aproximar">＋</button>
+        <button id="zoomOut" type="button" aria-label="Afastar" title="Afastar">−</button>
+      </div>
+      <section class="sheet" aria-label="Ferramentas de mapeamento">
+        <div class="mode-row" role="group" aria-label="Criar feição no mapa">
+          <button class="mode active" type="button" data-mode="point" aria-label="Ponto" aria-pressed="true"><span class="mode-icon">⌖</span><span>PONTO</span></button>
+          <button class="mode" type="button" data-mode="track" aria-label="Linha" aria-pressed="false"><span class="mode-icon">↝</span><span>LINHA</span></button>
+          <button class="mode" type="button" data-mode="area" aria-label="Área" aria-pressed="false"><span class="mode-icon">⬡</span><span>ÁREA</span></button>
+        </div>
+      </section>
+      <button id="recordBtn" class="record-btn" type="button" aria-label="Marcar ponto" title="Marcar ponto" aria-describedby="recordHint"></button>
+      <span id="recordHint" class="sr-only">Aguardando posição GPS para registrar.</span>
+      <div id="toast" class="toast" role="status" hidden></div>
+      <div id="drawerShade" class="drawer-shade"></div>
+      <nav id="drawer" class="drawer" aria-label="Menu principal">
+        <div class="drawer-title"><img class="drawer-brand-logo" src="/assets/gona-logo.png" alt="GoNa — Georreferenciamento"><small>Ferramentas de campo</small></div>
+        <button class="active" type="button" data-page="map"><span>⌖</span>Mapa</button>
+        <button type="button" data-page="layers"><span>▱</span>Camadas offline</button>
+        <button type="button" data-page="collections"><span>▤</span><span id="countText">Meus arquivos · 0</span></button>
+        <button type="button" data-page="import"><span>⇧</span>Importar arquivo</button>
+        <button type="button" data-page="export"><span>⇩</span>Exportar arquivos</button>
+        <button type="button" data-page="credits"><span>ⓘ</span>Créditos do mapa</button>
+        <button type="button" data-page="settings"><span>⚙</span>Configurações</button>
+        <button type="button" data-page="install"><span>↓</span>Instalar aplicativo</button>
+        <div class="drawer-note">Seus arquivos ficam salvos neste aparelho e navegador. Exporte cópias para guardar ou compartilhar. A sincronização entre aparelhos ainda não está disponível.</div>
+      </nav>
+      <input id="fileInput" type="file" accept="*/*,.pdf,application/pdf,.geojson,.json,.kml,.kmz,.gpx,.csv,.txt,.zip,.shp,.dxf,application/geo+json,application/json,application/vnd.google-earth.kml+xml,application/gpx+xml,text/csv,application/zip" multiple hidden>
+    </main>
+  </div>
+  <dialog id="areaOptionsDialog" class="files-dialog area-options-dialog" aria-labelledby="areaOptionsTitle">
+    <header class="dialog-head"><div><h2 id="areaOptionsTitle">Mapear área</h2><small>Escolha como registrar os vértices</small></div><button id="closeAreaOptions" class="dialog-close" type="button" aria-label="Fechar opções da área">×</button></header>
+    <div class="dialog-content">        <section id="areaTools" class="area-tools" aria-label="Modo de mapeamento da área" hidden>
+          <div class="area-options" role="group" aria-label="Coleta de vértices">
+            <button id="areaManual" class="area-choice active" type="button" aria-pressed="true">Manual<small>Adicionar vértices</small></button>
+            <button id="areaAuto" class="area-choice" type="button" aria-pressed="false">Caminhando<small>Automático a cada 1 m</small></button>
+          </div>
+          <div id="areaStats" class="area-stats" role="status">0 vértices</div>
+          <div class="area-controls"><button id="finishArea" class="secondary-btn" type="button">Finalizar área</button><button id="cancelArea" class="secondary-btn" type="button">Descartar</button></div>
+        </section>
+<p class="format-note">Use o ícone à direita para registrar. Toque novamente em ÁREA para finalizar ou abrir estas opções.</p></div>
+  </dialog>
+  <dialog id="documentDialog" class="files-dialog" aria-labelledby="documentDialogTitle">
+    <header class="dialog-head"><div><h2 id="documentDialogTitle">Novo arquivo</h2><small>Um mapa separado para cada trabalho</small></div><button id="closeDocumentDialog" class="dialog-close" type="button" aria-label="Fechar novo arquivo">×</button></header>
+    <form id="documentForm" class="dialog-content"><div class="field"><label for="documentName">Nome do arquivo</label><input id="documentName" maxlength="100" required autocomplete="off" placeholder="Ex.: Talhão 21 - Cobertura"></div><p class="local-notice">Um novo arquivo começa sem elementos. Seus mapas anteriores continuam guardados em Meus arquivos.</p><p id="documentStatus" class="file-status" role="status"></p><div class="dialog-actions"><button id="saveDocument" class="primary" type="submit">Criar arquivo</button></div></form>
+  </dialog>
+  <dialog id="appInstallDialog" class="files-dialog" aria-labelledby="appInstallTitle">
+    <header class="dialog-head"><div><h2 id="appInstallTitle">Instalar aplicativo</h2><small>Adicione o Mapeamento à tela inicial</small></div><button id="closeAppInstall" class="dialog-close" type="button" aria-label="Fechar instalação">×</button></header>
+    <div class="dialog-content"><p class="local-notice"><strong>iPhone:</strong> no Safari, toque em Compartilhar, escolha <em>Adicionar à Tela de Início</em>, ative <em>Abrir como App</em> e toque em Adicionar.</p><p class="local-notice"><strong>Android:</strong> toque em Instalar abaixo. Se essa opção não aparecer, abra o menu ⋮ do navegador e escolha <em>Instalar app</em> ou <em>Adicionar à tela inicial</em>.</p><button id="installAppNow" class="primary" type="button" hidden>Instalar no dispositivo</button><p id="installAppStatus" class="format-note" role="status">O app instalado abre em tela cheia. Para mapear, permita o acesso à localização.</p></div>
+  </dialog>
+  <dialog id="creditsDialog" class="files-dialog" aria-labelledby="creditsTitle"><header class="dialog-head"><h2 id="creditsTitle">Créditos do mapa</h2><button id="closeCredits" class="dialog-close" type="button" aria-label="Fechar créditos">×</button></header><div class="dialog-content"><p class="local-notice">Imagens © Esri, Maxar, Earthstar Geographics e GIS User Community. Vias e referências © Esri.</p><p class="local-notice">Visualizador Leaflet. Créditos e informações das imagens: <a href="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer" target="_blank" rel="noopener noreferrer">Esri World Imagery</a>.</p></div></dialog>
+  <dialog id="newFeatureDialog" class="files-dialog" aria-labelledby="newFeatureTitle">
+    <header class="dialog-head"><div><h2 id="newFeatureTitle">Novo elemento</h2><small>Adicione ao mesmo mapa</small></div><button id="closeNewFeature" class="dialog-close" type="button" aria-label="Fechar novo elemento">×</button></header>
+    <div class="dialog-content"><div class="new-feature-options"><button type="button" data-new-mode="point">⌖<strong>Ponto</strong></button><button type="button" data-new-mode="track">↝<strong>Linha</strong></button><button type="button" data-new-mode="area">⬡<strong>Área</strong></button></div><p class="format-note">Os elementos existentes permanecem no mapa. Use Exportar para gerar um arquivo com os elementos deste mapa. Para outro trabalho separado, toque em Novo arquivo no topo.</p></div>
+  </dialog>
+  <dialog id="filesDialog" class="files-dialog" aria-labelledby="filesTitle">
+    <header class="dialog-head"><div><h2 id="filesTitle">Meus arquivos</h2><small id="filesCount"></small></div><button id="closeFiles" class="dialog-close" type="button" aria-label="Fechar Meus arquivos">×</button></header>
+    <div class="dialog-content"><p class="local-notice">Cada arquivo guarda seu próprio mapa, com pontos, linhas e áreas. Os dados ficam neste aparelho e navegador; exporte cópias para guardar fora do app.</p>
+      <div id="filesUndo" class="files-undo" role="status" hidden><span>Exclusão realizada</span><button id="filesUndoButton" class="secondary-btn" type="button">Desfazer</button></div>
+      <div id="documentsList" class="documents-list"></div><h3 class="elements-heading">Elementos do arquivo atual</h3>
+      <div class="file-filters"><input id="filesSearch" type="search" placeholder="Buscar elemento" aria-label="Buscar por nome"><select id="filesType" aria-label="Filtrar tipo"><option value="">Todos</option><option value="point">Pontos</option><option value="line">Linhas</option><option value="area">Áreas</option></select></div>
+      <div id="filesList" class="files-list"></div><div class="dialog-actions"><button id="exportAllFiles" class="primary" type="button">Exportar este arquivo</button></div>
+    </div>
+  </dialog>
+  <dialog id="recordDialog" class="files-dialog" aria-labelledby="recordTitle">
+    <header class="dialog-head"><div><h2 id="recordTitle">Salvar mapeamento</h2><small id="recordStatus" role="status"></small></div><button id="closeRecord" class="dialog-close" type="button" aria-label="Fechar arquivo">×</button></header>
+    <form id="recordForm" class="dialog-content">
+      <div class="record-summary"><div id="recordPreview"></div><div><p id="recordMetrics"></p><small id="recordDate"></small></div></div>
+      <div class="field"><label for="recordName">Nome do arquivo</label><input id="recordName" maxlength="100" required autocomplete="off"></div>
+      <div class="field"><label for="recordNotes">Observações (opcional)</label><textarea id="recordNotes" maxlength="2000"></textarea></div>
+      <div class="dialog-actions"><button id="saveRecord" class="primary" type="submit">Salvar</button><button id="recordExport" class="secondary-btn" type="button">Exportar / Compartilhar</button></div>
+      <div class="dialog-actions"><button id="recordOpenMap" class="secondary-btn" type="button">Abrir no mapa</button></div>
+      <p class="format-note">O mapeamento já foi guardado automaticamente neste aparelho. Salvar confirma o nome e as observações.</p>
+    </form>
+  </dialog>
+  <dialog id="exportDialog" class="files-dialog" aria-labelledby="exportTitle">
+    <header class="dialog-head"><div><h2 id="exportTitle">Exportar arquivo</h2><small id="exportScope"></small></div><button id="closeExport" class="dialog-close" type="button" aria-label="Fechar exportação">×</button></header>
+    <div class="dialog-content export-layout"><div class="field"><label for="exportName">Nome do arquivo</label><input id="exportName" maxlength="100" autocomplete="off" placeholder="Nome do seu mapa"></div><div class="field"><label for="exportFormat">Formato</label><select id="exportFormat"></select></div>
+      <p id="exportInfo" class="export-file-info"></p><p id="exportStatus" class="file-status" role="status"></p>
+      <div class="dialog-actions"><button id="downloadFile" class="primary" type="button">Baixar</button><button id="shareFile" class="secondary-btn" type="button">Compartilhar arquivo</button></div>
+      <p class="format-note">Para visualizar a medição no WhatsApp, escolha PDF. KML, KMZ, GeoJSON e shapefile são arquivos para abrir em aplicativos de mapas. O compartilhamento envia o arquivo escolhido.</p>
+      <p class="format-note">CAD: DXF em WGS84 / UTM, com unidades em metros. DWG ainda depende da integração de um conversor e não está disponível nesta versão.</p>
+    </div>
+  </dialog>
+  <dialog id="importDialog" class="files-dialog" aria-labelledby="importTitle">
+    <header class="dialog-head"><div><h2 id="importTitle">Importar arquivo geográfico</h2><small>Os dados são processados neste aparelho</small></div><button id="closeImport" class="dialog-close" type="button" aria-label="Fechar importação">×</button></header>
+    <div class="dialog-content"><p class="format-note">Importe GeoJSON/JSON, KML/KMZ, GPX, CSV com latitude/longitude, Shapefile compactado em ZIP (inclua .shp, .shx, .dbf e .prj) ou DXF georreferenciado em WGS84. PDF e GeoPDF abrem para visualização.</p><p class="format-note">Coordenadas projetadas em Shapefile/CSV precisam informar EPSG ou zona UTM. DWG, GeoPackage e imagens/raster ainda precisam ser convertidos para um formato vetorial compatível.</p><div class="dialog-actions"><button id="chooseImport" class="primary" type="button">Escolher arquivo(s)</button></div><p id="importStatus" class="file-status" role="status" aria-live="polite">Selecione um ou mais arquivos para começar.</p></div>
+  </dialog>
+  <dialog id="pdfPreviewDialog" class="files-dialog pdf-dialog" aria-labelledby="pdfPreviewHeading">
+    <header class="dialog-head"><div><h2 id="pdfPreviewHeading">Visualização do PDF</h2><small id="pdfPreviewName"></small></div><button id="closePdfPreview" class="dialog-close" type="button" aria-label="Fechar PDF">×</button></header>
+    <div class="dialog-content pdf-content"><iframe id="pdfFrame" title="Documento PDF ou GeoPDF"></iframe><p id="pdfPreviewStatus" class="format-note">O PDF abre como documento de referência. O GoNa não converte automaticamente o conteúdo do PDF em pontos, linhas ou áreas.</p><div class="dialog-actions"><a id="pdfOpenExternal" class="secondary-btn pdf-open-external" target="_blank" rel="noopener">Abrir no leitor do aparelho</a></div></div>
+  </dialog>
+  <script src="file-formats.js"></script>
+  <script src="file-import.js"></script>
+  <script src="file-manager.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tomickigrzegorz/leaflet-rotate@0.2.4/dist/leaflet-rotate.umd.min.js"></script>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const map = L.map('map', { zoomControl:false, attributionControl:false, rotate:true, touchRotate:true, dragRotate:true, shiftKeyRotate:true, rotateClockwise:true, rotateControl:{position:'topright',behavior:'reset',closeOnZeroBearing:false}, preventPageGestures:true, maxZoom:24 }).setView([-15.8,-54.2], 5);
+      const imageryLayer=L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{zIndex:0,maxZoom:24,maxNativeZoom:19,attribution:'Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community'});
+      const transportationLayer=L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:24,maxNativeZoom:19,attribution:'Roads &copy; Esri',zIndex:1});
+      const referenceLayer=L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:24,maxNativeZoom:19,opacity:1,attribution:'Labels &copy; Esri',zIndex:2});
+      let basemapMode='satellite',deleteMode=false,deletedFeatures=[];
+      try{const saved=localStorage.getItem('fieldmap-basemap');if(['none','satellite','hybrid'].includes(saved))basemapMode=saved}catch{}
+      function applyBasemap(announce=false){
+        for(const layer of [imageryLayer,transportationLayer,referenceLayer])if(map.hasLayer(layer))map.removeLayer(layer);
+        if(basemapMode!=='none')imageryLayer.addTo(map);
+        if(basemapMode==='hybrid'){transportationLayer.addTo(map);referenceLayer.addTo(map)}
+        const names={none:'Sem mapa',satellite:'Satélite',hybrid:'Híbrido'},next={none:'satellite',satellite:'hybrid',hybrid:'none'};
+        $('basemapLabel').textContent=names[basemapMode];$('basemapToggle').setAttribute('aria-label','Fundo: '+names[basemapMode]+'. Toque para '+names[next[basemapMode]]);$('basemapToggle').title='Fundo: '+names[basemapMode];
+        try{localStorage.setItem('fieldmap-basemap',basemapMode)}catch{}
+        if(announce)notify('Fundo: '+names[basemapMode]);
+      }
+      let lastTileError=0,imageryFallbackApplied=false;
+      imageryLayer.on('tileerror',()=>{
+        if(!imageryFallbackApplied && imageryLayer.options.maxNativeZoom>18){
+          imageryFallbackApplied=true;
+          imageryLayer.options.maxNativeZoom=18;
+          imageryLayer.redraw();
+          if(Date.now()-lastTileError>30000){lastTileError=Date.now();notify('A imagem foi ampliada para manter o maior zoom disponível nesta região.');}
+          return;
+        }
+        if(Date.now()-lastTileError>30000){lastTileError=Date.now();notify('Não foi possível carregar o fundo. Verifique a conexão ou escolha Sem mapa.')}
+      });
+      for(const layer of [transportationLayer,referenceLayer])layer.on('tileerror',()=>{if(Date.now()-lastTileError>30000){lastTileError=Date.now();notify('Não foi possível carregar o fundo. Verifique a conexão ou escolha Sem mapa.')}});
+      applyBasemap();
+      const userIcon = L.divIcon({className:'user-position-icon',html:'<span></span>',iconSize:[30,30],iconAnchor:[15,15]});
+      const positionMarker = L.marker([-15.8,-54.2],{icon:userIcon,zIndexOffset:1000,rotation:0,rotateWithView:true}).addTo(map);
+      const accuracyRing = L.circle([-15.8,-54.2],{radius:0,color:'#87939d',weight:1,fillColor:'#87939d',fillOpacity:.08}).addTo(map);
+      const captureLayer = L.featureGroup().addTo(map);
+      const style = document.createElement('style');
+      style.textContent='.user-position-icon{background:transparent!important;border:0!important}.user-position-icon span{position:relative;display:block;width:23px;height:23px;margin:3.5px;background:#37d785;clip-path:polygon(50% 0%,88% 34%,79% 69%,50% 100%,21% 69%,12% 34%);filter:drop-shadow(0 0 4px rgba(55,215,133,.95)) drop-shadow(0 0 9px rgba(55,215,133,.65));border:0}.user-position-icon span:after{content:"";position:absolute;left:50%;top:5px;width:5px;height:5px;transform:translateX(-50%);border-radius:50%;background:#fff}';
+      style.textContent += '.gona-edit-handle{background:transparent!important;border:0!important}.gona-edit-handle span{display:block;width:16px;height:16px;margin:1px;border:2px solid #fff;border-radius:50%;background:#ffd45e;box-shadow:0 0 0 3px rgba(255,212,94,.25),0 2px 8px rgba(0,0,0,.45)}';
+      document.head.appendChild(style);
+
+      let watchId=null, currentFix=null, deviceHeading=null, orientationListening=false, mode='point', recordingTrack=false, trackCoords=[], areaCoords=[], lastTrackPoint=null, toastTimer=null;
+      let areaMethod='manual', recordingArea=false, areaStartedAt=null;
+      const areaDraftLayer=L.featureGroup().addTo(map);
+      let storageBlocked=false;
+      let features=restoreFeatures();
+      let documents=[],activeDocumentId=null,editingDocumentId=null;
+      restoreDocuments();
+      refreshSavedMap();
+      updateCount();
+
+      function notify(message){const el=$('toast');el.textContent=message;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.hidden=true},2800)}
+      function setGpsError(message){$('gpsError').textContent=message;$('gpsError').hidden=false;$('gpsStart').hidden=false;$('startGps').textContent='◎  Tentar novamente'}
+      function clearGpsError(){$('gpsError').hidden=true;$('startGps').textContent='◎  Usar minha localização'}
+      function updateAccuracy(accuracy){
+        const card=$('gpsCard'),indicator=$('precisionIndicator'),scale=$('precisionScale');
+        card.classList.remove('good','attention','low','none');
+        let position=96,color='none',aria='Sem posição confiável';
+        if(Number.isFinite(accuracy)&&accuracy>=0){
+          if(accuracy<=1){position=(accuracy/1)*(100/7);color='good';aria='Precisão estimada: '+formatAccuracy(accuracy)+', boa'}
+          else if(accuracy<=3){position=(100/7)+((accuracy-1)/2)*(200/7);color='attention';aria='Precisão estimada: '+formatAccuracy(accuracy)+', atenção'}
+          else if(accuracy<=5){position=(300/7)+((accuracy-3)/2)*(200/7);color='low';aria='Precisão estimada: '+formatAccuracy(accuracy)+', baixa'}
+          else{position=(500/7)+Math.min((accuracy-5)/15,1)*(200/7);color='none';aria='Precisão estimada: '+formatAccuracy(accuracy)+', acima de 5 metros'}
+        }
+        card.classList.add(color);indicator.style.setProperty('--accuracy-position',Math.max(1,Math.min(position,99))+'%');scale.setAttribute('aria-label',aria);
+      }
+      function formatAccuracy(value){return value<10?value.toFixed(1)+' metros':Math.round(value)+' metros'}
+      function updateCount(){$('countText').textContent='Meus arquivos · '+currentFeatures().length;$('activeDocumentName').textContent=currentDocument()?.name||'Meu mapa'}
+      function updateActionLabel(){
+        const btn=$('recordBtn'),hint=$('recordHint');let label,icon;
+        btn.classList.remove('recording');$('areaTools').hidden=mode!=='area';
+        if(mode==='point'){label='Marcar ponto';icon='point';hint.textContent=currentFix?'Registra a posição atual e a precisão estimada.':'Aguardando posição GPS para registrar.'}
+        else if(mode==='track'){label=recordingTrack?'Parar linha':'Iniciar linha';icon=recordingTrack?'stop':'play';btn.classList.toggle('recording',recordingTrack);hint.textContent=recordingTrack?'Linha gravando enquanto esta tela estiver aberta.':'Registra seu deslocamento como uma linha.'}
+        else{label=areaMethod==='auto'?(recordingArea?'Finalizar área':'Iniciar mapeamento'):'Adicionar vértice';icon=areaMethod==='auto'?(recordingArea?'stop':'play'):'vertex';btn.classList.toggle('recording',recordingArea);hint.textContent=areaMethod==='auto'?'Mantenha esta tela aberta durante o percurso.':'Toque em ÁREA para finalizar ou abrir as opções.';updateAreaStats()}
+        const paths={point:'<path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/>',play:'<path d="m8 5 11 7-11 7Z"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',vertex:'<path d="m4 5 8-2 8 6-4 11-12-4Z"/><path d="M12 8v8M8 12h8"/>'};
+        btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[icon]+'</svg>';btn.setAttribute('aria-label',label);btn.title=label;
+      }
+      function openAreaOptions(){updateAreaStats();$('areaOptionsDialog').showModal()}
+      function measureArea(points){
+        if(points.length<3)return{perimeter:0,area:0};
+        const radians=Math.PI/180,radius=6371008.8;let perimeter=0,sum=0;
+        for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];perimeter+=map.distance([a.lat,a.lng],[b.lat,b.lng]);const delta=((b.lng-a.lng+540)%360-180)*radians;sum+=delta*(2+Math.sin(a.lat*radians)+Math.sin(b.lat*radians))}
+        return{perimeter,area:Math.abs(sum)*radius*radius/2};
+      }
+      function formatNumber(value,digits=2){return value.toLocaleString('pt-BR',{minimumFractionDigits:digits,maximumFractionDigits:digits})}
+      function updateAreaStats(){
+        const metrics=measureArea(areaCoords);
+        $('areaStats').textContent=areaCoords.length+' vértices'+(areaCoords.length>=3?' · '+formatNumber(metrics.perimeter)+' m · '+formatNumber(metrics.area/10000,4)+' ha':'');
+        $('finishArea').disabled=areaCoords.length<3;$('cancelArea').disabled=areaCoords.length===0;
+        $('areaManual').disabled=recordingArea||areaCoords.length>0;$('areaAuto').disabled=recordingArea||areaCoords.length>0;
+      }
+      function renderAreaDraft(){
+        areaDraftLayer.clearLayers();const latlngs=areaCoords.map(p=>[p.lat,p.lng]);
+        if(latlngs.length>=3)L.polygon(latlngs,{color:'#ffd45e',weight:2,fillColor:'#58df91',fillOpacity:.22}).addTo(areaDraftLayer);
+        else if(latlngs.length>=2)L.polyline(latlngs,{color:'#ffd45e',weight:2}).addTo(areaDraftLayer);
+        if(latlngs.length)L.circleMarker(latlngs[latlngs.length-1],{radius:4,color:'#fff',weight:2,fillColor:'#ffd45e',fillOpacity:1}).addTo(areaDraftLayer);
+        updateAreaStats();
+      }
+      function addAutomaticVertices(fix){
+        const last=areaCoords[areaCoords.length-1];if(!last)return;
+        const distance=map.distance([last.lat,last.lng],[fix.lat,fix.lng]);
+        if(distance<1)return;
+        const count=Math.floor(distance),deltaLng=((fix.lng-last.lng+540)%360)-180;
+        for(let i=1;i<=count;i++){const fraction=i/distance;areaCoords.push({lat:last.lat+(fix.lat-last.lat)*fraction,lng:((last.lng+deltaLng*fraction+540)%360)-180,accuracy:fix.accuracy,timestamp:fix.timestamp})}
+        renderAreaDraft();
+      }
+      function setAreaMethod(method){
+        if(recordingArea||areaCoords.length)return;
+        areaMethod=method;for(const [id,value] of [['areaManual','manual'],['areaAuto','auto']]){const button=$(id),active=method===value;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))}updateActionLabel();$('areaOptionsDialog').close();
+      }
+      function finishArea(){
+        if(areaCoords.length<3){notify('Registre pelo menos 3 vértices para finalizar.');return}
+        const metrics=measureArea(areaCoords);if(metrics.area<.01){notify('Percorra o contorno: os vértices ainda não formam uma área.');return}
+        const coords=areaCoords.map(p=>[p.lng,p.lat]);coords.push([...coords[0]]);
+        const vertexCount=areaCoords.length;
+        const feature={type:'Feature',geometry:{type:'Polygon',coordinates:[coords]},properties:{type:'area',capture_mode:areaMethod,started_at:areaStartedAt,ended_at:new Date().toISOString(),vertex_count:vertexCount,perimeter_m:metrics.perimeter,area_m2:metrics.area,area_ha:metrics.area/10000,vertex_accuracy_m:areaCoords.map(p=>p.accuracy),source:'iphone_or_android_location'}};
+        if(!saveFeature(feature))return;$('areaOptionsDialog').close();recordingArea=false;areaCoords=[];areaStartedAt=null;areaDraftLayer.clearLayers();updateActionLabel();
+      }
+      function discardArea(){$('areaOptionsDialog').close();recordingArea=false;areaCoords=[];areaStartedAt=null;areaDraftLayer.clearLayers();updateActionLabel();notify('Mapeamento da área descartado.')}
+      function normalizeFeature(feature,index,seen){
+        const copy={...feature,properties:{...(feature.properties||{})}},type=FieldFormats.stats(copy).type;
+        let id=String(copy.id??'');if(!id||seen.has(id))id=globalThis.crypto?.randomUUID?.()||('f-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));seen.add(id);copy.id=id;
+        if(!String(copy.properties.name||'').trim())copy.properties.name=type+' '+String(index+1).padStart(3,'0');
+        if(!copy.properties.saved_at)copy.properties.saved_at=new Date().toISOString();return copy;
+      }
+      function restoreFeatures(){
+        try{const raw=localStorage.getItem('fieldmap-features');if(!raw)return[];const existing=JSON.parse(raw);if(!Array.isArray(existing))throw Error('Formato de armazenamento inválido');const valid=existing.filter(FieldFormats.validFeature);if(valid.length!==existing.length){localStorage.setItem('fieldmap-features-recovery',raw);notify('Alguns registros antigos não puderam ser abertos. Uma cópia de recuperação foi preservada.')}const seen=new Set(),restored=valid.map((f,i)=>normalizeFeature(f,i,seen));try{localStorage.setItem('fieldmap-features',JSON.stringify(restored))}catch{}return restored}catch(e){storageBlocked=true;notify('Não foi possível ler seus arquivos. O armazenamento existente foi preservado.');return[]}
+      }
+      function currentDocument(){return documents.find(d=>d.id===activeDocumentId&&!d.deleted_at)}
+      function currentFeatures(){if(!currentDocument())return[];return features.filter(f=>f.properties.document_id===activeDocumentId)}
+      function documentId(){return globalThis.crypto?.randomUUID?.()||('map-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2))}
+      function restoreDocuments(){
+        try{
+          const raw=JSON.parse(localStorage.getItem('fieldmap-documents')||'[]');
+          if(!Array.isArray(raw))throw Error('Lista de arquivos inválida');
+          const seen=new Set();documents=raw.filter(d=>d&&typeof d.id==='string'&&typeof d.name==='string'&&!seen.has(d.id)&&(seen.add(d.id),true));
+          if(!documents.length)documents=[{id:'map-original',name:'Meu mapa 001',created_at:new Date().toISOString()}];
+          const known=new Set(documents.map(d=>d.id));
+          features=features.map(f=>{const id=typeof f.properties.document_id==='string'&&f.properties.document_id?f.properties.document_id:documents[0].id;if(!known.has(id)){documents.push({id,name:'Arquivo recuperado '+String(documents.length+1).padStart(3,'0'),created_at:new Date().toISOString()});known.add(id)}return{...f,properties:{...f.properties,document_id:id}}});
+          if(!documents.some(d=>!d.deleted_at)){const fallback={id:documentId(),name:'Meu mapa '+String(documents.length+1).padStart(3,'0'),created_at:new Date().toISOString()};documents.push(fallback);known.add(fallback.id)}const active=localStorage.getItem('fieldmap-active-document');activeDocumentId=documents.some(d=>d.id===active&&!d.deleted_at)?active:documents.find(d=>!d.deleted_at).id;
+          if(!storageBlocked){localStorage.setItem('fieldmap-documents',JSON.stringify(documents));localStorage.setItem('fieldmap-features',JSON.stringify(features));localStorage.setItem('fieldmap-active-document',activeDocumentId)}
+        }catch(e){storageBlocked=true;if(!documents.length)documents=[{id:'map-original',name:'Meu mapa 001'}];activeDocumentId=documents[0].id;features=features.map(f=>({...f,properties:{...f.properties,document_id:f.properties.document_id||activeDocumentId}}));notify('Não foi possível atualizar os arquivos. Os dados existentes foram preservados.')}
+      }
+      function saveDocuments(next){if(storageBlocked){notify('O armazenamento não está disponível.');return false}try{localStorage.setItem('fieldmap-documents',JSON.stringify(next));documents=next;updateCount();return true}catch(e){notify('Não foi possível salvar o arquivo neste aparelho.');return false}}
+      function activateDocument(id){
+        if(hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de trocar de arquivo.');return false}
+        if(!documents.some(d=>d.id===id&&!d.deleted_at))return false;
+        try{localStorage.setItem('fieldmap-active-document',id)}catch(e){notify('Não foi possível abrir o arquivo.');return false}
+        activeDocumentId=id;deletedFeatures=[];$('undoDelete').hidden=true;deleteMode=false;setDeleteMode(false);updateCount();updateActionLabel();
+        const items=currentFeatures();if(items.length){const bounds=L.geoJSON(items).getBounds();if(bounds.isValid())map.fitBounds(bounds,{padding:[35,35],maxZoom:24})}
+        return true;
+      }
+      function openDocumentEditor(id=null){if(!id&&hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de criar outro arquivo.');return}editingDocumentId=id;const doc=documents.find(d=>d.id===id);$('documentDialogTitle').textContent=doc?'Renomear arquivo':'Novo arquivo';$('saveDocument').textContent=doc?'Salvar nome':'Criar arquivo';$('documentName').value=doc?doc.name:'Meu mapa '+String(documents.length+1).padStart(3,'0');$('documentStatus').textContent='';$('documentDialog').showModal()}
+      function submitDocument(event){
+        event.preventDefault();const name=$('documentName').value.trim().slice(0,100);if(!name){$('documentStatus').textContent='Informe um nome para o arquivo.';return}
+        if(editingDocumentId){if(!saveDocuments(documents.map(d=>d.id===editingDocumentId?{...d,name,updated_at:new Date().toISOString()}:d)))return;$('documentDialog').close();fileManager.openFiles();return}
+        if(hasDraft()){notify('Finalize ou descarte o mapeamento atual.');return}
+        const doc={id:documentId(),name,created_at:new Date().toISOString()};if(!saveDocuments([...documents,doc]))return;if(!activateDocument(doc.id))return;$('documentDialog').close();notify('Novo arquivo criado. Adicione pontos, linhas ou áreas.');
+      }
+      function persistFeatures(next){
+        if(storageBlocked){notify('O armazenamento não está disponível. Seus dados antigos foram preservados.');return false}
+        try{localStorage.setItem('fieldmap-features',JSON.stringify(next));features=next;updateCount();return true}catch(e){notify('Não foi possível salvar neste aparelho. Libere espaço no navegador e tente novamente.');return false}
+      }
+      var featureEditLayer=null, suppressFeatureClick=false, longPressTimer=null;
+      function clearFeatureEdit(){
+        if(featureEditLayer){featureEditLayer.clearLayers();map.removeLayer(featureEditLayer);featureEditLayer=null}
+      }
+      function featureVertexCoords(feature){
+        const g=feature.geometry||{};
+        if(g.type==='Point')return [[g.coordinates[0],g.coordinates[1]]];
+        if(g.type==='LineString')return g.coordinates.map(c=>[c[0],c[1]]);
+        if(g.type==='Polygon')return (g.coordinates?.[0]||[]).slice(0,-1).map(c=>[c[0],c[1]]);
+        return [];
+      }
+      function nearestFeatureVertex(feature,latlng){
+        const coords=featureVertexCoords(feature);let best=null,bestDistance=Infinity;
+        coords.forEach((c,index)=>{const d=map.distance(latlng,[c[1],c[0]]);if(d<bestDistance){bestDistance=d;best={index,latlng:L.latLng(c[1],c[0])}}});
+        return best;
+      }
+      function persistEditedFeature(feature){
+        const idx=features.findIndex(f=>String(f.id)===String(feature.id));
+        if(idx<0)return false;
+        const next=[...features];next[idx]=feature;
+        if(!persistFeatures(next))return false;
+        refreshSavedMap();return true;
+      }
+      function startFeatureEdit(feature,pressLatLng){
+        if(deleteMode||hasDraft())return;
+        clearFeatureEdit();
+        const nearest=nearestFeatureVertex(feature,pressLatLng);
+        if(!nearest)return;
+        const coords=featureVertexCoords(feature);
+        if(nearestFeatureVertex(feature,pressLatLng).index<0)return;
+        featureEditLayer=L.featureGroup().addTo(map);
+        const handles=[];
+        coords.forEach((coord,index)=>{
+          const marker=L.marker([coord[1],coord[0]],{draggable:true,keyboard:false,zIndexOffset:1000,icon:L.divIcon({className:'gona-edit-handle',html:'<span></span>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(featureEditLayer);
+          handles.push(marker);
+          marker.on('drag',e=>{
+            const ll=e.target.getLatLng();
+            const next={...feature,geometry:{...feature.geometry,coordinates:feature.geometry.type==='Point'?(index===0?[ll.lng,ll.lat]:feature.geometry.coordinates):feature.geometry.type==='LineString'?feature.geometry.coordinates.map((c,i)=>i===index?[ll.lng,ll.lat]:c):(()=>{const ring=feature.geometry.coordinates[0].map((c,i)=>i===index?[ll.lng,ll.lat]:c);if(ring.length)ring[ring.length-1]=[...ring[0]];return [ring]})()}};
+            const geoLayer=L.geoJSON(next,{style:()=>({color:'#ffd45e',weight:3,fillOpacity:.16}),pointToLayer:(_,p)=>L.circleMarker(p,{radius:7,color:'#fff',weight:2,fillColor:'#ffd45e',fillOpacity:1})});
+            captureLayer.clearLayers();geoLayer.addTo(captureLayer);
+          });
+          marker.on('dragend',e=>{
+            const ll=e.target.getLatLng();let next={...feature,geometry:{...feature.geometry}};
+            if(next.geometry.type==='Point')next.geometry.coordinates=[ll.lng,ll.lat];
+            else if(next.geometry.type==='LineString')next.geometry.coordinates=next.geometry.coordinates.map((c,i)=>i===index?[ll.lng,ll.lat]:c);
+            else if(next.geometry.type==='Polygon'){const ring=next.geometry.coordinates[0].map((c,i)=>i===index?[ll.lng,ll.lat]:c);if(ring.length)ring[ring.length-1]=[...ring[0]];next.geometry={...next.geometry,coordinates:[ring]}}
+            next.properties={...(next.properties||{}),edited_at:new Date().toISOString(),edit_source:'map_drag'};
+            if(persistEditedFeature(next)){feature=next;notify('Vértice ajustado e salvo.')}else e.target.setLatLng([coords[index][1],coords[index][0]]);
+          });
+        });
+        notify(feature.geometry.type==='Point'?'Arraste o ponto para corrigir a posição.':'Arraste os vértices para corrigir a geometria.');
+      }
+      function armLongPress(layer,feature){
+        const start=e=>{clearTimeout(longPressTimer);const original=e.originalEvent;const touch=original?.touches?.[0]||original;const ll=e.latlng||map.mouseEventToLatLng(touch);longPressTimer=setTimeout(()=>{suppressFeatureClick=true;startFeatureEdit(feature,ll)},650)};
+        const cancel=()=>{clearTimeout(longPressTimer);longPressTimer=null};
+        layer.on('mousedown touchstart',start);layer.on('mouseup mouseout touchend touchcancel',cancel);
+      }
+      function refreshSavedMap(){
+        clearFeatureEdit();captureLayer.clearLayers();
+        L.geoJSON(currentFeatures(),{style:()=>({color:deleteMode?'#ff6d6d':'#46d6c6',weight:3,fillOpacity:deleteMode?.24:.18}),pointToLayer:(_,latlng)=>L.circleMarker(latlng,{radius:7,color:'#fff',weight:2,fillColor:deleteMode?'#ff6d6d':'#58df91',fillOpacity:1}),onEachFeature:(feature,layer)=>{
+          armLongPress(layer,feature);
+          layer.on('click',()=>{if(suppressFeatureClick){suppressFeatureClick=false;return}if(deleteMode)removeMapFeature(feature.id);else fileManager.openRecord(feature.id)});
+        }}).addTo(captureLayer);
+      }
+      function setDeleteMode(active){deleteMode=active;$('deleteFeature').classList.toggle('deleting',active);$('deleteFeature').setAttribute('aria-pressed',String(active));$('deleteFeature').setAttribute('aria-label',active?'Cancelar exclusão de elementos':'Ativar exclusão de elementos');refreshSavedMap()}
+      function hasDraft(){return recordingArea||recordingTrack||areaCoords.length>0}
+      function removeMapFeature(id){if(hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de excluir.');return false}const index=features.findIndex(f=>String(f.id)===String(id));if(index<0||features[index].properties.document_id!==activeDocumentId)return false;const removed=features[index];if(!persistFeatures(features.filter((_,i)=>i!==index)))return false;deletedFeatures.push({feature:removed,index});if(deletedFeatures.length>20)deletedFeatures.shift();$('undoDelete').hidden=false;setDeleteMode(false);notify('Elemento excluído. Toque em Desfazer para recuperar.');return true}
+      function removeDocument(id){
+        if(hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de excluir um arquivo.');return false}
+        const doc=documents.find(d=>d.id===id&&!d.deleted_at);if(!doc)return false;
+        const next=documents.map(d=>d.id===id?{...d,deleted_at:new Date().toISOString()}:d);
+        let fallbackId=null;if(!next.some(d=>!d.deleted_at)){fallbackId=documentId();next.push({id:fallbackId,name:'Novo mapa',created_at:new Date().toISOString()})}
+        if(!saveDocuments(next))return false;
+        if(activeDocumentId===id){activeDocumentId=documents.find(d=>!d.deleted_at).id;try{localStorage.setItem('fieldmap-active-document',activeDocumentId)}catch{}}
+        deletedFeatures=[{kind:'document',documentId:id,fallbackId}];$('undoDelete').hidden=false;setDeleteMode(false);updateCount();updateActionLabel();notify('Arquivo e seus elementos excluídos. Você pode desfazer.');return true;
+      }
+      function undoMapDelete(){
+        const entry=deletedFeatures.at(-1);if(!entry)return false;
+        if(entry.kind==='document'){
+          if(hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de restaurar o arquivo.');return false}
+          if(!saveDocuments(documents.filter(d=>d.id!==entry.fallbackId||features.some(f=>f.properties.document_id===d.id)).map(d=>{if(d.id!==entry.documentId)return d;const restored={...d};delete restored.deleted_at;return restored})))return false;
+          deletedFeatures.pop();activateDocument(entry.documentId);$('undoDelete').hidden=true;notify('Arquivo e seus elementos restaurados.');return true;
+        }
+        if(entry.feature.properties.document_id!==activeDocumentId)return false;const next=[...features];next.splice(Math.min(entry.index,next.length),0,entry.feature);if(!persistFeatures(next))return false;deletedFeatures.pop();$('undoDelete').hidden=deletedFeatures.length===0;refreshSavedMap();notify('Elemento restaurado no mapa e em Meus arquivos.');return true;
+      }
+      function beginNewElement(nextMode){if(hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de criar outro.');return}setDeleteMode(false);mode=nextMode;document.querySelectorAll('.mode').forEach(b=>{const active=b.dataset.mode===mode;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});$('newFeatureDialog').close();updateActionLabel();if(mode==='area')openAreaOptions();notify(mode==='area'?'Nova área: escolha Manual ou Caminhando.':mode==='track'?'Nova linha: toque em Iniciar linha.':'Novo ponto: toque em Marcar ponto.')}
+      function saveFeature(feature,options={}){if(!FieldFormats.validFeature(feature)){notify('Não foi possível salvar: geometria inválida.');return null}const saved=normalizeFeature({...feature,properties:{...(feature.properties||{}),document_id:activeDocumentId}},features.length,new Set(features.map(f=>String(f.id))));if(!persistFeatures([...features,saved]))return null;refreshSavedMap();if(options.open!==false)fileManager.openRecord(saved.id);return saved}
+      function fixProperties(){return{captured_at:new Date(currentFix.timestamp).toISOString(),horizontal_accuracy_m:currentFix.accuracy,source:'iphone_or_android_location'}}
+      function capturePoint(){if(!currentFix){notify('Ative o GPS e aguarde uma posição.');return}const f={type:'Feature',geometry:{type:'Point',coordinates:[currentFix.lng,currentFix.lat]},properties:{...fixProperties(),type:'point'}};if(saveFeature(f))notify('Ponto salvo em Meus arquivos.')}
+      function handleAction(){
+        if(deleteMode){setDeleteMode(false);notify('Exclusão encerrada. Toque novamente para registrar.');return}
+        if(mode==='area'&&recordingArea){finishArea();return}
+        if(mode==='track'&&recordingTrack){recordingTrack=false;if(trackCoords.length>=2){const saved=saveFeature({type:'Feature',geometry:{type:'LineString',coordinates:trackCoords},properties:{type:'line',ended_at:new Date().toISOString()}});if(!saved){recordingTrack=true;updateActionLabel();return}notify('Linha salva em Meus arquivos.')}else notify('Linha encerrada: registre mais pontos para salvar.');trackCoords=[];lastTrackPoint=null;updateActionLabel();return}
+        if(!currentFix||Date.now()-currentFix.timestamp>15000){notify('Ative o GPS e aguarde uma posição atual.');return}
+        if(mode==='point'){capturePoint();return}
+        if(mode==='track'){recordingTrack=true;trackCoords=[[currentFix.lng,currentFix.lat]];lastTrackPoint=currentFix;updateActionLabel();notify('Linha iniciada.');return}
+        if(!areaStartedAt)areaStartedAt=new Date().toISOString();
+        if(areaMethod==='auto'){recordingArea=true;areaCoords=[{...currentFix}];renderAreaDraft();notify('Mapeamento iniciado. Caminhe pelo contorno da área.')}
+        else{areaCoords.push({...currentFix});renderAreaDraft()}
+        updateActionLabel();
+      }
+      function geojson(){return{type:'FeatureCollection',features:currentFeatures()}}
+      function exportData(){fileManager.openExport()}
+      let pdfObjectUrl=null;function previewPdf(file){if(pdfObjectUrl)URL.revokeObjectURL(pdfObjectUrl);pdfObjectUrl=URL.createObjectURL(file);$('pdfPreviewName').textContent=file.name;$('pdfFrame').src=pdfObjectUrl;$('pdfOpenExternal').href=pdfObjectUrl;$('pdfPreviewStatus').textContent='O PDF abre como documento de referência. Se for GeoPDF, a visualização do mapa fica preservada; os elementos do documento não são convertidos automaticamente em pontos, linhas ou áreas.';$('pdfPreviewDialog').showModal()}
+      async function importFiles(fileList){const chosen=Array.from(fileList||[]);if(!chosen.length)return;const status=$('importStatus'),pdfs=chosen.filter(f=>f.name.toLowerCase().endsWith('.pdf'));if(pdfs.length){$('chooseImport').disabled=false;if(chosen.length>1){status.textContent='Para visualizar um PDF por vez, selecione apenas um PDF. Formatos vetoriais podem ser importados em conjunto.';return}previewPdf(pdfs[0]);return}status.textContent='Lendo e validando '+chosen.length+' arquivo(s)…';$('chooseImport').disabled=true;const parsed=[],errors=[];for(const file of chosen){try{parsed.push(...await FieldImport.read(file))}catch(error){errors.push(file.name+': '+(error.message||'não foi possível ler o arquivo'))}}$('chooseImport').disabled=false;if(!parsed.length){status.textContent=errors.length?errors.join(' · '):'Nenhuma geometria compatível encontrada.';return}const seen=new Set(features.map(f=>String(f.id))),now=new Date().toISOString(),incoming=parsed.map((f,i)=>normalizeFeature({...f,properties:{...f.properties,document_id:activeDocumentId,source_file:chosen.map(x=>x.name).join(', ').slice(0,200),imported_at:now,source:f.properties?.source||'arquivo_importado'}},features.length+i,seen));if(!persistFeatures([...features,...incoming])){status.textContent='Não foi possível guardar os elementos neste aparelho. Libere espaço no navegador e tente novamente.';return}refreshSavedMap();const bounds=L.geoJSON({type:'FeatureCollection',features:incoming}).getBounds();if(bounds.isValid()){if(bounds.getSouthWest().equals(bounds.getNorthEast()))map.setView(bounds.getCenter(),Math.max(map.getZoom(),18));else map.fitBounds(bounds,{padding:[32,32],maxZoom:24})}status.textContent=incoming.length+' elemento(s) importado(s) para “'+(currentDocument()?.name||'Meu mapa')+'”.'+(errors.length?' Alguns arquivos não foram importados: '+errors.join(' · '):'');notify(incoming.length+' elemento(s) importado(s).');if(!errors.length){$('importDialog').close();fileManager.openFiles()}}
+      function updateHeading(heading){
+        if(!Number.isFinite(heading))return;
+        deviceHeading=((heading%360)+360)%360;
+        positionMarker.options.rotation=deviceHeading;
+        positionMarker.update();
+        if(map.getHeadingUp())map.setHeading(deviceHeading,{ease:0.18,deadzone:0.3});
+      }
+      async function enableDeviceHeading(){
+        if(orientationListening)return;
+        try{
+          if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+            const permission=await DeviceOrientationEvent.requestPermission();
+            if(permission!=='granted'){notify('Permissão da bússola não concedida. O mapa continuará funcionando sem rotação automática.');return}
+          }
+          const eventName=('ondeviceorientationabsolute' in window)?'deviceorientationabsolute':'deviceorientation';
+          const onOrientation=e=>{
+            let heading=null;
+            if(Number.isFinite(e.webkitCompassHeading)) heading=e.webkitCompassHeading;
+            else if(Number.isFinite(e.alpha)) heading=(360-e.alpha)%360;
+            if(Number.isFinite(heading))updateHeading(heading);
+          };
+          window.addEventListener(eventName,onOrientation,true);
+          if(eventName!=='deviceorientation')window.addEventListener('deviceorientation',onOrientation,true);
+          orientationListening=true;
+        }catch(err){notify('A bússola do aparelho não está disponível neste navegador.');}
+      }
+      function handlePosition(pos){clearGpsError();const c=pos.coords;currentFix={lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,timestamp:pos.timestamp};positionMarker.setLatLng([c.latitude,c.longitude]);if(Number.isFinite(c.heading)&&c.heading>=0)updateHeading(c.heading);accuracyRing.setLatLng([c.latitude,c.longitude]);accuracyRing.setRadius(Math.max(c.accuracy||0,1));accuracyRing.setStyle({color:c.accuracy<=1?'#58df91':c.accuracy<=3?'#ffd45e':c.accuracy<=5?'#ff6d6d':'#87939d',fillColor:c.accuracy<=1?'#58df91':c.accuracy<=3?'#ffd45e':c.accuracy<=5?'#ff6d6d':'#87939d'});updateAccuracy(c.accuracy);$('gpsStart').hidden=true;if(!map._hasCentered){map.setView([c.latitude,c.longitude],Math.max(map.getZoom(),18));map._hasCentered=true}if(recordingArea)addAutomaticVertices(currentFix);if(recordingTrack){const prev=lastTrackPoint;const distance=prev?map.distance([prev.lat,prev.lng],[c.latitude,c.longitude]):Infinity;if(distance>=1){trackCoords.push([c.longitude,c.latitude]);lastTrackPoint=currentFix}}updateActionLabel()}
+      function handleGpsError(err){currentFix=null;if(err.code===1){setGpsError('A permissão de localização foi negada. No iPhone, habilite os Serviços de Localização e permita o acesso para Safari ou Chrome. Depois volte ao site e tente novamente.')}else if(err.code===2){setGpsError('O aparelho não conseguiu determinar a posição. Verifique se os Serviços de Localização estão ligados e tente em uma área aberta.')}else{setGpsError('A localização está demorando. Aguarde alguns segundos ou tente novamente em uma área aberta, com o site aberto no Safari ou Chrome.')}updateAccuracy(null);updateActionLabel()}
+      function startGps(){if(!window.isSecureContext){setGpsError('A localização exige conexão segura. Abra este app pelo link HTTPS no Safari ou Chrome.');return}if(!('geolocation'in navigator)){setGpsError('Este navegador não disponibiliza localização. Abra o link no Safari ou Chrome atualizado.');return}clearGpsError();$('gpsStart').hidden=true;enableDeviceHeading();if(watchId!==null)navigator.geolocation.clearWatch(watchId);try{watchId=navigator.geolocation.watchPosition(handlePosition,handleGpsError,{enableHighAccuracy:true,maximumAge:0,timeout:60000})}catch(err){setGpsError('Não foi possível iniciar a localização. Abra o link no Safari ou Chrome e permita o acesso à localização.')}}
+      function closeMenu(){ $('app').classList.remove('menu-open') }
+      const fileManager=FieldManager.create({getFeatures:currentFeatures,getDocuments:()=>documents.filter(d=>!d.deleted_at),deleteDocument:removeDocument,deleteFeature:removeMapFeature,undoDelete:undoMapDelete,canUndo:()=>deletedFeatures.length>0,getDocumentName:()=>currentDocument()?.name||'Meu mapa',getActiveDocumentId:()=>activeDocumentId,getDocumentFeatures:id=>features.filter(f=>f.properties.document_id===id),activateDocument,editDocument:openDocumentEditor,notify,
+        updateFeature:(id,properties)=>{const original=features.find(f=>String(f.id)===id);if(!original)return null;const updated={...original,properties:{...original.properties,...properties,updated_at:new Date().toISOString()}};if(!persistFeatures(features.map(f=>String(f.id)===id?updated:f)))return null;refreshSavedMap();return updated},
+        openMap:feature=>{if(feature.geometry.type==='Point')map.setView([feature.geometry.coordinates[1],feature.geometry.coordinates[0]],18);else{const bounds=L.geoJSON(feature).getBounds();if(bounds.isValid())map.fitBounds(bounds,{padding:[35,35],maxZoom:24})}}
+      });
+      map.on('rotate',()=>{if(Number.isFinite(deviceHeading)){positionMarker.options.rotation=deviceHeading;positionMarker.update()}});
+      $('closeAppInstall').addEventListener('click',()=>$('appInstallDialog').close());
+      let deferredInstallPrompt=null;
+      window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;$('installAppNow').hidden=false});
+      window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;$('installAppNow').hidden=true;$('installAppStatus').textContent='Aplicativo instalado. Abra-o pelo ícone na tela inicial.'});
+      $('installAppNow').addEventListener('click',async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('appInstallDialog').close()});
+      $('newDocument').addEventListener('click',()=>openDocumentEditor());$('activeDocumentButton').addEventListener('click',()=>fileManager.openFiles());$('closeDocumentDialog').addEventListener('click',()=>$('documentDialog').close());$('documentForm').addEventListener('submit',submitDocument);$('closeCredits').addEventListener('click',()=>$('creditsDialog').close());
+      $('basemapToggle').addEventListener('click',()=>{basemapMode={none:'satellite',satellite:'hybrid',hybrid:'none'}[basemapMode];applyBasemap(true)});
+      $('newFeature').addEventListener('click',()=>{if(hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de criar outro.');return}setDeleteMode(false);$('newFeatureDialog').showModal()});
+      $('closeNewFeature').addEventListener('click',()=>$('newFeatureDialog').close());
+      document.querySelectorAll('[data-new-mode]').forEach(button=>button.addEventListener('click',()=>beginNewElement(button.dataset.newMode)));
+      $('deleteFeature').addEventListener('click',()=>{if(hasDraft()){notify('Finalize ou descarte o mapeamento atual antes de excluir.');return}if(!currentFeatures().length){notify('Nenhum elemento salvo para excluir.');return}setDeleteMode(!deleteMode);if(deleteMode)notify('Toque no ponto, linha ou área que deseja excluir.')});
+      $('undoDeleteBtn').addEventListener('click',undoMapDelete);
+      $('startGps').addEventListener('click',startGps);$('menuOpen').addEventListener('click',()=>$('app').classList.add('menu-open'));$('drawerShade').addEventListener('click',closeMenu);$('recordBtn').addEventListener('click',handleAction);$('recenter').addEventListener('click',()=>{if(currentFix)map.setView([currentFix.lat,currentFix.lng],Math.max(map.getZoom(),18));else notify('Aguardando uma posição GPS.')});$('zoomIn').addEventListener('click',()=>map.zoomIn());$('zoomOut').addEventListener('click',()=>map.zoomOut());$('fileInput').addEventListener('change',e=>{importFiles(e.target.files);e.target.value=''});$('chooseImport').addEventListener('click',()=>$('fileInput').click());$('closeImport').addEventListener('click',()=>$('importDialog').close());$('closePdfPreview').addEventListener('click',()=>$('pdfPreviewDialog').close());$('pdfPreviewDialog').addEventListener('close',()=>{const frame=$('pdfFrame');frame.removeAttribute('src');if(pdfObjectUrl){URL.revokeObjectURL(pdfObjectUrl);pdfObjectUrl=null}});
+      $('closeAreaOptions').addEventListener('click',()=>$('areaOptionsDialog').close());
+      $('areaManual').addEventListener('click',()=>setAreaMethod('manual'));$('areaAuto').addEventListener('click',()=>setAreaMethod('auto'));$('finishArea').addEventListener('click',finishArea);$('cancelArea').addEventListener('click',discardArea);
+      document.querySelectorAll('.mode').forEach(button=>button.addEventListener('click',()=>{if((recordingArea||recordingTrack)&&button.dataset.mode!==mode){notify('Finalize o mapeamento atual antes de trocar.');return}document.querySelectorAll('.mode').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false')});button.classList.add('active');button.setAttribute('aria-pressed','true');mode=button.dataset.mode;updateActionLabel();if(mode==='area')openAreaOptions()}));
+      document.querySelectorAll('.drawer button').forEach(button=>button.addEventListener('click',()=>{const page=button.dataset.page;document.querySelectorAll('.drawer button').forEach(b=>b.classList.remove('active'));button.classList.add('active');closeMenu();if(page==='export')exportData();else if(page==='import'){$('importStatus').textContent='Selecione um ou mais arquivos para começar.';$('importDialog').showModal()}else if(page==='collections')fileManager.openFiles();else if(page==='layers')notify('Mapas offline serão ativados na próxima etapa.');else if(page==='credits')$('creditsDialog').showModal();else if(page==='settings')notify('Configurações de coleta serão adicionadas na próxima etapa.');else if(page==='install'){if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone){$('installAppStatus').textContent='Este aplicativo já está instalado. Abra-o pelo ícone na tela inicial.';$('installAppNow').hidden=true}else{$('installAppStatus').textContent='O app instalado abre em tela cheia. Para mapear, permita o acesso à localização.';$('installAppNow').hidden=!deferredInstallPrompt;$('appInstallDialog').showModal()}}}));
+      window.addEventListener('online',()=>{$('netDot').style.background='var(--green)';$('netLabel').textContent='Mapa online'});window.addEventListener('offline',()=>{$('netDot').style.background='var(--gray)';$('netLabel').textContent='Sem internet'});if(!navigator.onLine){$('netDot').style.background='var(--gray)';$('netLabel').textContent='Sem internet'}
+      map.on('click',e=>{
+        if(deleteMode||featureEditLayer)return;
+        if(mode==='point'){
+          const f={type:'Feature',geometry:{type:'Point',coordinates:[e.latlng.lng,e.latlng.lat]},properties:{type:'point',capture_mode:'manual_map',captured_at:new Date().toISOString(),source:'map_tap'}};
+          if(saveFeature(f))notify('Ponto criado no local tocado no mapa.');
+          return;
+        }
+        if(mode==='track'){
+          if(!recordingTrack){recordingTrack=true;trackCoords=[];lastTrackPoint=null;notify('Linha manual iniciada. Toque no mapa para adicionar vértices.');}
+          trackCoords.push([e.latlng.lng,e.latlng.lat]);lastTrackPoint={lat:e.latlng.lat,lng:e.latlng.lng,timestamp:Date.now()};
+          areaDraftLayer.clearLayers();if(trackCoords.length>1)L.polyline(trackCoords.map(c=>[c[1],c[0]]),{color:'#ffd45e',weight:3}).addTo(areaDraftLayer);L.circleMarker(e.latlng,{radius:4,color:'#fff',weight:2,fillColor:'#ffd45e',fillOpacity:1}).addTo(areaDraftLayer);
+          updateActionLabel();return;
+        }
+        if(mode==='area'&&areaMethod==='manual'){
+          if(!areaStartedAt)areaStartedAt=new Date().toISOString();
+          areaCoords.push({lat:e.latlng.lat,lng:e.latlng.lng,accuracy:null,timestamp:Date.now()});renderAreaDraft();
+          notify(areaCoords.length===1?'Vértice manual adicionado.':'Vértice adicionado no local tocado.');updateActionLabel();
+        }
+      });
+      window.addEventListener('beforeunload',()=>{if(watchId!==null)navigator.geolocation.clearWatch(watchId)});if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js').catch(()=>{}));updateActionLabel();
+    })();
+  </script>
+</body>
+</html>

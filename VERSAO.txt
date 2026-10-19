@@ -1,0 +1,4 @@
+Versão publicada: 17
+
+Base: GoNa v17
+Melhorias: mapa rotativo, bússola/Norte, cursor direcional e zoom ampliado do satélite.
